@@ -208,12 +208,6 @@ def vm_to_dict(vm, detail=False):
 
         d['volumes'] = [v.id for v in vm.volumes.order_by('id')]
 
-        # include the latest vm diagnostic, if set
-        diagnostic = vm.get_last_diagnostic()
-        if diagnostic:
-            d['diagnostics'] = diagnostics_to_dict([diagnostic])
-        else:
-            d['diagnostics'] = []
         # Fixed
         d["security_groups"] = [{"name": "default"}]
         d["key_name"] = None
@@ -338,7 +332,8 @@ def get_server_diagnostics(request, server_id):
     Virtual machine diagnostics api view.
     """
     log.debug('server_diagnostics %s', server_id)
-    vm = util.get_vm(server_id, request.user_uniq)
+    vm = util.get_vm(server_id, request.user_uniq,
+                     prefetch_related="diagnostics")
     diagnostics = diagnostics_to_dict(vm.diagnostics.all())
     return render_diagnostics(request, diagnostics)
 

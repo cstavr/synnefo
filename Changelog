@@ -82,6 +82,12 @@ Astakos
 * Projects can be set `private', making it accessible only to its owner and
   members.
 
+Cyclades
+--------
+
+* Remove 'diagnostics' attribute from the response of the get/list servers
+  API call.
+
 
 .. _Changelog-0.15.1:
 
