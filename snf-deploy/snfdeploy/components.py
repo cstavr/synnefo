@@ -775,7 +775,6 @@ class GTools(base.Component):
     def prepare(self):
         return [
             "sed -i 's/false/true/' /etc/default/snf-ganeti-eventd",
-            "chown -R root:archipelago /etc/synnefo/",
             ]
 
     def _configure(self):
@@ -873,12 +872,6 @@ class Gunicorn(base.Component):
         "gunicorn",
         ]
 
-    @base.run_cmds
-    def prepare(self):
-        return [
-            "chown root:www-data /var/log/gunicorn",
-            ]
-
     def _configure(self):
         r1 = {"HOST": self.node.fqdn}
         return [
@@ -899,6 +892,13 @@ class Common(base.Component):
         "snf-branding",
         ]
 
+    @base.run_cmds
+    def prepare(self):
+        return [
+            "mkdir -p %s" % config.mail_dir,
+            "chmod 777 %s" % config.mail_dir,
+            ]
+
     def _configure(self):
         r1 = {
             "EMAIL_SUBJECT_PREFIX": self.node.hostname,
@@ -909,10 +909,6 @@ class Common(base.Component):
         return [
             ("/etc/synnefo/common.conf", r1, {}),
             ]
-
-    @base.run_cmds
-    def initialize(self):
-        return ["mkdir -p {0}; chmod 777 {0}".format(config.mail_dir)]
 
     @base.run_cmds
     def restart(self):
@@ -1204,9 +1200,7 @@ EOF
 
         return [
             "mkdir -p %s" % config.shared_dir,
-            "addgroup --gid 200 archipelago",
-            "adduser --system --no-create-home \
-              --gecos 'Archipelago user' --gid 200 archipelago",
+            "addgroup --system --gid 200 synnefo",
             fstab,
             ]
 
@@ -1243,11 +1237,9 @@ class NFS(base.Component):
             "mkdir -p %s" % config.images_dir,
             "mkdir -p %s" % config.ganeti_dir,
             "mkdir -p %s" % config.archip_dir,
-            "addgroup --gid 200 archipelago",
-            "adduser --system --no-create-home \
-              --gecos 'Archipelago user' --gid 200 archipelago",
+            "addgroup --system --gid 200 synnefo",
             "cd %s && mkdir {maps,blocks,locks}" % config.archip_dir,
-            "cd %s && chown archipelago:archipelago {maps,blocks,locks}" % \
+            "cd %s && chown root:synnefo {maps,blocks,locks}" % \
               config.archip_dir,
             "cd %s && chmod 770 {maps,blocks,locks}" % config.archip_dir,
             "cd %s && chmod g+s {maps,blocks,locks}" % config.archip_dir,
@@ -1301,12 +1293,6 @@ class Pithos(base.Component):
         f = config.jsonfile
         return [
             "snf-manage service-export-pithos > %s" % f
-            ]
-
-    @base.run_cmds
-    def prepare(self):
-        return [
-            "chown -R root:archipelago /etc/synnefo/",
             ]
 
     def _configure(self):
@@ -1456,7 +1442,6 @@ snf-manage network-create --subnet6={0} \
     def prepare(self):
         return [
             "sed -i 's/false/true/' /etc/default/snf-dispatcher",
-            "chown -R root:archipelago /etc/synnefo/",
             ]
 
     def _configure(self):
@@ -1585,19 +1570,12 @@ class Admin(base.Component):
         self.NS.update_ns()
         self.DB.allow_db_access()
         self.DB.restart()
-
-    @base.run_cmds
-    @update_admin
-    def prepare(self):
         f = "/etc/synnefo/astakos.conf"
         self.ASTAKOS.get(f, "/tmp/astakos.conf")
         self.put("/tmp/astakos.conf", f)
         f = "/etc/synnefo/cyclades.conf"
         self.CYCLADES.get(f, "/tmp/cyclades.conf")
         self.put("/tmp/cyclades.conf", f)
-        return [
-            "chown -R root:archipelago /etc/synnefo",
-            ]
 
     def _configure(self):
         r1 = {
@@ -1751,8 +1729,9 @@ class Stats(base.Component):
     @base.run_cmds
     def prepare(self):
         return [
-            "mkdir -p /var/cache/snf-stats-app/",
-            "chown www-data:www-data /var/cache/snf-stats-app/",
+            "mkdir -p /var/cache/snf-stats-app",
+            "chmod g+ws /var/cache/snf-stats-app",
+            "chown synnefo:synnefo /var/cache/snf-stats-app",
             ]
 
     def _configure(self):
@@ -1819,7 +1798,7 @@ class Archip(base.Component):
     @base.run_cmds
     def restart(self):
         return [
-            "archipelago restart"
+            "archipelago restart",
             ]
 
 
@@ -1830,9 +1809,8 @@ class ArchipSynnefo(base.Component):
     def prepare(self):
         return [
             "mkdir -p /etc/synnefo/gunicorn-hooks",
-            "chown -R root:archipelago /etc/synnefo",
-            "chown -R root:archipelago /var/log/gunicorn",
-            "chmod g+s /etc/synnefo/",
+            "chmod 750 /etc/synnefo/gunicorn-hooks",
+            "chmod g+s /etc/synnefo/gunicorn-hooks",
             ]
 
     def _configure(self):
