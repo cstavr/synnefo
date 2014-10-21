@@ -79,9 +79,9 @@ You also need a shared directory visible by both nodes. Pithos will save all
 data inside this directory. By 'all data', we mean files, images, and Pithos
 specific mapping data. If you plan to upload more than one basic image, this
 directory should have at least 50GB of free space. During this guide, we will
-assume that node1 acts as an NFS server and serves the directory ``/srv/pithos``
+assume that node1 acts as an NFS server and serves the directory ``/srv/arhip``
 to node2 (be sure to set no_root_squash flag). Node2 has this directory
-mounted under ``/srv/pithos``, too.
+mounted under ``/srv/arhip``, too.
 
 Before starting the Synnefo installation, you will need basic third party
 software to be installed and configured on the physical nodes. We will describe
@@ -301,39 +301,85 @@ exchanges:
 We do not need to initialize the exchanges. This will be done automatically,
 during the Cyclades setup.
 
-Pithos data directory setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As mentioned in the General Prerequisites section, there should be a directory
-called ``/srv/pithos`` visible by both nodes. We create and setup the ``data``
-directory inside it along with the ``maps`` and ``blocks`` subdirectories:
+System user/group setup
+~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: console
+Before we continue with the installation we have to mention the user and
+group that our components will run as. In short Archipelago (and
+specifically the ``archipelago`` package) creates the ``archipelago``
+system user and group while synnefo (and specifically the ``snf-common``
+package) creates the ``synnefo`` system user and group.
 
-   # mkdir /srv/pithos
-   # cd /srv/pithos
-   # mkdir data
-   # mkdir -p data/{maps,blocks}
-
-This directory must be shared via `NFS <https://en.wikipedia.org/wiki/Network_File_System>`_.
-In order to do this, run:
+In order not to create users manually, we install the corresponding packages
+everywhere:
 
 .. code-block:: console
 
-   # yum install rpcbind nfs-utils
+  # apt-get install archipelago snf-common
+
+
+This guide uses NFS for Archipelago's physical storage backend. The
+following section mentions the changes that should be made regarding
+the aforementioned users and groups.
+
+
+NFS data directory setup
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Archipelago directory must be shared via
+`NFS <https://en.wikipedia.org/wiki/Network_File_System>`_.
+As mentioned in the General Prerequisites section, there should be a
+directory called ``/srv/archip/`` with ``blocks``, ``maps``, and
+``locks`` subdirectories visible by both nodes. To create it run:
+
+.. code-block:: console
+
+   # mkdir /srv/archip/
+   # cd /srv/archip/
+   # mkdir -p {maps,blocks,locks}
+
+Due to NFS permissions, the user ID and group ID that own the
+exported directory must be common across all nodes.
+
+We choose to give the ownership to Archipelago (i.e.
+``archipelago:archipelago``) as it will be the only one that should have
+access to it. We assume here that id 200 is available among occupied
+user and group IDs across all nodes. To modify the ``archipelago`` user
+and group id to 200 run:
+
+.. code-block:: console
+
+   # usermod --uid 200 archipelago
+   # groupmod --gid 200 archipelago
+
+Then apply the proper permissions and ownership to the exported
+directories:
+
+.. code-block:: console
+
+   # cd /srv/archip
+   # chown archipelago:archipelago {maps,blocks,locks}
+   # chmod 770 {maps,blocks,locks}
+   # chmod g+s {maps,blocks,locks}
+
+In order to install the NFS server, run:
+
+.. code-block:: console
+
+   # apt-get install rpcbind nfs-kernel-server
 
 Now edit ``/etc/exports`` and add the following line:
 
 .. code-block:: console
 
-   /srv/pithos/ 203.0.113.2(rw,no_root_squash,sync,subtree_check)
+   /srv/archip/ 203.0.113.2(rw,no_root_squash,sync,subtree_check)
 
 Once done, run:
 
 .. code-block:: console
 
-   # service rpcbind restart
-   # service nfs restart
+   # /etc/init.d/nfs-kernel-server restart
 
 Archipelago setup
 ~~~~~~~~~~~~~~~~~
@@ -342,10 +388,14 @@ To install Archipelago, run:
 
 .. code-block:: console
 
-   # yum install archipelago
-
+   root@node1:~ # apt-get install archipelago archipelago-ganeti
+   root@node1:~ # apt-get install blktap-archipelago-utils blktap-dkms
 
 Now edit ``/etc/archipelago/archipelago.conf`` and tweak the following settings:
+
+* ``USER``: Let Archipelago run as ``archipelago`` user (default)
+
+* ``GROUP``: Let Archipelago run as ``synnefo`` group (archipelago by default)
 
 * ``SEGMENT_SIZE``: Adjust shared memory segment size according to your machine's
   RAM. The default value is 2GB which in some situations might exceed your
@@ -353,19 +403,24 @@ Now edit ``/etc/archipelago/archipelago.conf`` and tweak the following settings:
   <https://www.synnefo.org/docs/archipelago/latest/admin-guide.html>`_ for an
   appropriate value.
 
+Adjust the following settings of  ``blockerb`` and ``blockerm`` to point to
+their corresponding directories.
+
 In section ``blockerb`` set:
 
-* ``archip_dir``: ``/srv/pithos/data/blocks``
+* ``archip_dir``: ``/srv/archip/blocks``
 
 In section ``blockerm`` set:
 
-* ``archip_dir``: ``/srv/pithos/data/maps``
+* ``archip_dir``: ``/srv/archip/maps``
+* ``lock_dir``: ``/srv/archip/locks``
 
-Finally, restart Archipelago:
+Finally, start Archipelago:
 
 .. code-block:: console
 
-   # service archipelago restart
+   root@node1:~ # /etc/init.d/archipelago start
+
 
 DNS server setup
 ~~~~~~~~~~~~~~~~
@@ -1055,6 +1110,10 @@ To install Archipelago, run:
 
 Now edit ``/etc/archipelago/archipelago.conf`` and tweak the following settings:
 
+* ``USER``: Let Archipelago run as ``synnefo`` user (defaults to archipelago)
+
+* ``GROUP``: Let Archipelago run as ``synnefo`` group (defaults to archipelago)
+
 * ``SEGMENT_SIZE``: Adjust shared memory segment size according to your machine's
   RAM. The default value is 2GB which in some situations might exceed your
   machine's physical RAM. Consult also with `Archipelago administrator's guide
@@ -1063,11 +1122,12 @@ Now edit ``/etc/archipelago/archipelago.conf`` and tweak the following settings:
 
 In section ``blockerb`` set:
 
-* ``archip_dir``: ``/srv/pithos/data/blocks``
+* ``archip_dir``: ``/srv/arhip/blocks``
 
 In section ``blockerm`` set:
 
-* ``archip_dir``: ``/srv/pithos/data/maps``
+* ``archip_dir``: ``/srv/arhip/maps``
+* ``lock_dir``: ``/srv/arhip/locks``
 
 Finally, restart Archipelago:
 
@@ -1210,12 +1270,12 @@ First install the package nfs-common by running:
 
    root@node2:~ # yum install nfs-utils
 
-now create the directory /srv/pithos/ and mount the remote directory to it:
+Now create the directory /srv/arhip/ and mount the remote directory to it:
 
 .. code-block:: console
 
-   root@node2:~ # mkdir /srv/pithos/
-   root@node2:~ # mount -t nfs 203.0.113.1:/srv/pithos/ /srv/pithos/
+   root@node2:~ # mkdir /srv/arhip/
+   root@node2:~ # mount -t nfs 203.0.113.1:/srv/arhip/ /srv/arhip/
 
 Servers Initialization
 ----------------------
@@ -1540,7 +1600,7 @@ it can talk directly to the Pithos backend, without the need of providing a
 public URL. More details, are described in the next section.
 
 If you have installed your Ganeti cluster on different nodes than node1 and
-node2 make sure that ``/srv/pithos/data`` is visible by all of them and
+node2 make sure that ``/srv/arhip/`` is visible by all of them and
 Archipelago is installed and configured properly.
 
 If you would like to use Images that are also/only stored locally, you need to
@@ -2056,7 +2116,7 @@ Edit ``/etc/synnefo/20-snf-cyclades-app-plankton.conf``:
 .. code-block:: console
 
    BACKEND_DB_CONNECTION = 'postgresql://synnefo:example_passw0rd@node1.example.com:5432/snf_pithos'
-   BACKEND_BLOCK_PATH = '/srv/pithos/data/'
+   BACKEND_BLOCK_PATH = '/srv/arhip/'
 
 In this file we configure the Image Service. ``BACKEND_DB_CONNECTION``
 denotes the Pithos database (where the Image files are stored). So we set that
