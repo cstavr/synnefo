@@ -21,6 +21,48 @@ all the interactions between them.
    :target: _images/synnefo-arch2.png
 
 
+Required system user and group (synnefo)
+========================================
+
+Since v0.16, Synnefo requires an Archipelago installation for the Pithos
+backend. Archipelago on the other hand, supports both NFS and RADOS as
+storage backends. This leads us to various components that have specific
+access rights.
+
+Synnefo ships its own configuration files under ``/etc/synnefo``. In
+order those files not to be compromised, the are owned by
+``root:synnefo`` with group read access (mode 740). Since Gunicorn,
+which serves Synnefo by default, needs read access to the configuration
+files and we don't want it to run as root, it must run with group
+``synnefo``.
+
+Cyclades and Pithos talk to Archipelago over some named pipes under
+``/dev/shm/posixfd``. This directory is created by Archipelago, owned by
+the user/group that Archipelago runs as, and at the same time it must be
+accessible by Gunicorn. Therefore we let Gunicorn run as ``synnefo``
+user and Archipelago as ``archipelago:synnefo`` (by default it rus as
+``archipelago:archipelago``). Beware that the ``synnefo`` user and
+group is created by snf-common package.
+
+Archipelago must have a storage backend to physically store blocks, maps
+and locks. This can be either an NFS or a RADOS cluster. In case of NFS,
+Archipelago must have permissions to write on the exported dirs. So we
+choose to have ``/srv/archip`` exported with blocks, maps, locks
+subdirectories. They are owned by ``archipelago:archipelago`` and have g+ws
+access permissions. Archipelago runs with group ``archipelago`` so it will
+be able to write in these directories. Due to NFS restrictions, all
+Archipelago nodes must have common uid and gid for the archipelago user
+and group. We assume that id 200 is available on all nodes and we
+we create archipelago user and group in advance, before any synnefo
+installation:
+
+.. code-block:: console
+
+  # addgroup --system --gid 200 archipelago
+  # adduser --system --uid 200 --gid 200 --no-create-home \
+      --gecos Archipelago archipelago
+
+
 Identity Service (Astakos)
 ==========================
 
