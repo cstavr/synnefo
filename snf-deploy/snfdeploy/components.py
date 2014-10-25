@@ -1200,7 +1200,9 @@ EOF
 
         return [
             "mkdir -p %s" % config.shared_dir,
-            "addgroup --system --gid 200 synnefo",
+            "addgroup --system --gid 200 archipelago",
+            "adduser --system --uid 200 --quiet --no-create-home \
+               --group --gecos 'Archipelago user' archipelago",
             fstab,
             ]
 
@@ -1237,9 +1239,11 @@ class NFS(base.Component):
             "mkdir -p %s" % config.images_dir,
             "mkdir -p %s" % config.ganeti_dir,
             "mkdir -p %s" % config.archip_dir,
-            "addgroup --system --gid 200 synnefo",
+            "addgroup --system --gid 200 archipelago",
+            "adduser --system --uid 200 --quiet --no-create-home \
+               --group --gecos 'Archipelago user' archipelago",
             "cd %s && mkdir {maps,blocks,locks}" % config.archip_dir,
-            "cd %s && chown root:synnefo {maps,blocks,locks}" % \
+            "cd %s && chown archipelago:archipelago {maps,blocks,locks}" % \
               config.archip_dir,
             "cd %s && chmod 770 {maps,blocks,locks}" % config.archip_dir,
             "cd %s && chmod g+s {maps,blocks,locks}" % config.archip_dir,
