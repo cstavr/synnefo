@@ -28,17 +28,14 @@ log = logging.getLogger(__name__)
 
 
 @transaction.commit_on_success
-def create(user_id, size, server_id, name=None, description=None,
+def create(user_id, size, server, name=None, description=None,
            source_volume_id=None, source_snapshot_id=None,
            source_image_id=None, volume_type_id=None, metadata=None,
            project=None):
 
     # Currently we cannot create volumes without being attached to a server
-    if server_id is None:
+    if server is None:
         raise faults.BadRequest("Volume must be attached to server")
-    server = util.get_server(user_id, server_id, for_update=True,
-                             non_deleted=True,
-                             exception=faults.BadRequest)
 
     server_vtype = server.flavor.volume_type
     if volume_type_id is not None:
@@ -224,14 +221,11 @@ def delete(volume):
     """Delete a Volume"""
     # A volume is deleted by detaching it from the server that is attached.
     # Deleting a detached volume is not implemented.
-    server_id = volume.machine_id
-    if server_id is not None:
-        server = util.get_server(volume.userid, server_id, for_update=True,
-                                 non_deleted=True,
-                                 exception=faults.BadRequest)
+    server = volume.machine
+    if server is not None:
         server_attachments.detach_volume(server, volume)
         log.info("Detach volume '%s' from server '%s', job: %s",
-                 volume.id, server_id, volume.backendjobid)
+                 volume.id, server.id, volume.backendjobid)
     else:
         raise faults.BadRequest("Cannot delete a detached volume")
 
@@ -261,10 +255,9 @@ def reassign_volume(volume, project, shared_to_project):
     if volume.index == 0:
         raise faults.Conflict("Cannot reassign: %s is a system volume" %
                               volume.id)
-    if volume.machine_id is not None:
-        server = util.get_server(volume.userid, volume.machine_id,
-                                 for_update=True, non_deleted=True,
-                                 exception=faults.BadRequest)
+
+    server = volume.machine
+    if server is not None:
         commands.validate_server_action(server, "REASSIGN")
 
     if volume.project == project:

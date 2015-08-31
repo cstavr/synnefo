@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2015 GRNET S.A. and individual contributors
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,19 +33,12 @@ class VolumesTest(BaseAPITest):
             flavor__volume_type__disk_template="ext_archipelago")
         self.kwargs = {"user_id": self.userid,
                        "size": self.size,
-                       "server_id": self.vm.id}
+                       "server": self.vm}
 
     def test_create(self, mrapi):
         # No server id
         kwargs = deepcopy(self.kwargs)
-        kwargs["server_id"] = None
-        self.assertRaises(faults.BadRequest,
-                          volumes.create,
-                          **kwargs)
-
-        # Invalid server
-        vm = mf.VirtualMachineFactory(userid="other_user")
-        kwargs["server_id"] = vm.id
+        kwargs["server"] = None
         self.assertRaises(faults.BadRequest,
                           volumes.create,
                           **kwargs)
