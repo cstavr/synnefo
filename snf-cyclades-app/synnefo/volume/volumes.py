@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 def create(user_id, size, server, name=None, description=None,
            source_volume_id=None, source_snapshot_id=None,
            source_image_id=None, volume_type_id=None, metadata=None,
-           project=None):
+           project=None, shared_to_project=False):
 
     # Currently we cannot create volumes without being attached to a server
     if server is None:
@@ -80,7 +80,8 @@ def create(user_id, size, server, name=None, description=None,
     volume = _create_volume(server, user_id, project, size,
                             source_type, source_uuid,
                             volume_type=volume_type, name=name,
-                            description=description, index=None)
+                            description=description, index=None,
+                            shared_to_project=shared_to_project)
 
     if metadata is not None:
         for meta_key, meta_val in metadata.items():
@@ -97,7 +98,7 @@ def create(user_id, size, server, name=None, description=None,
 
 def _create_volume(server, user_id, project, size, source_type, source_uuid,
                    volume_type, name=None, description=None, index=None,
-                   delete_on_termination=True):
+                   delete_on_termination=True, shared_to_project=False):
 
     utils.check_name_length(name, Volume.NAME_LENGTH,
                             "Volume name is too long")
@@ -197,6 +198,7 @@ def _create_volume(server, user_id, project, size, source_type, source_uuid,
 
     volume = Volume.objects.create(userid=user_id,
                                    project=project,
+                                   shared_to_project=shared_to_project,
                                    size=size,
                                    volume_type=volume_type,
                                    name=name,
