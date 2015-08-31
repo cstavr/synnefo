@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2015 GRNET S.A. and individual contributors
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,7 +103,7 @@ serial = 0
 
 
 @contextmanager
-def astakos_user(user):
+def astakos_user(user, projects=None):
     """
     Context manager to mock astakos response.
 
@@ -129,6 +129,7 @@ def astakos_user(user):
                     "roles_links": [],
                     "id": smart_unicode(user, encoding='utf-8'),
                     "roles": [{"id": 1, "name": "default"}],
+                    "projects": projects,
                     "name": "Firstname Lastname"}}
                 }
 
