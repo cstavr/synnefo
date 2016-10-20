@@ -392,7 +392,8 @@ def update_image(request, image_id):
     validate_fields(meta)
 
     with PlanktonBackend(request.user_uniq) as backend:
-        image = backend.update_metadata(image_id, meta)
+        backend.update_metadata(image_id, meta)
+        image = backend.get_image(image_id)
     return _create_image_response(image)
 
 

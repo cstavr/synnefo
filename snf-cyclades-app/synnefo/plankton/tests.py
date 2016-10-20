@@ -40,7 +40,7 @@ def assert_backend_closed(func):
     return wrapper
 
 
-@patch("synnefo.plankton.backend.get_pithos_backend")
+@patch("synnefo.plankton.drivers.pithos_driver.get_pithos_backend")
 class PlanktonTest(BaseAPITest):
     def test_register_image(self, backend):
         required = {

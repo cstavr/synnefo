@@ -167,4 +167,5 @@ def update(snapshot, name=None, description=None):
         return
     user_id = snapshot["owner"]
     with PlanktonBackend(user_id) as b:
-        return b.update_metadata(snapshot["id"], metadata)
+        b.update_metadata(snapshot["id"], metadata)
+        return b.get_snapshot(snapshot["id"])

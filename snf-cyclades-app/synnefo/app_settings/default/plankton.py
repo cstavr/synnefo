@@ -3,6 +3,10 @@
 # Plankton configuration
 ########################
 
+# The driver class to be used for the Plankton backend, responsible for
+# storing images and snapshots.
+PLANKTON_BACKEND_DRIVER = "synnefo.plankton.drivers.pithos_driver.PithosPlanktonDriver"
+
 # Backend settings
 BACKEND_DB_CONNECTION = 'sqlite:////usr/share/synnefo/pithos/backend.db'
 PITHOS_BACKEND_POOL_SIZE = 8

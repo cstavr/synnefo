@@ -322,7 +322,7 @@ class UpdateDBTest(TestCase):
             update_db(client, msg)
         self.assertTrue(client.basic_reject.called)
 
-    @patch("synnefo.plankton.backend.get_pithos_backend")
+    @patch("synnefo.plankton.drivers.pithos_driver.get_pithos_backend")
     def test_error_snapshot(self, pithos_backend, client):
         vm = mfactory.VirtualMachineFactory()
         disks = [
