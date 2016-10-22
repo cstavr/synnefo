@@ -438,7 +438,11 @@ class PlanktonBackend(object):
     # Snapshots
     @handle_pithos_backend
     def register_snapshot(self, name, mapfile, size, metadata):
-        metadata = self._prefix_and_validate_metadata(metadata)
+        meta = deepcopy(metadata)
+        properties = meta.pop("properties", {})
+        meta.update(self._prefix_properties(properties))
+        meta = self._prefix_and_validate_metadata(meta)
+
         snapshot_id = self.backend.register_object_map(
             user=self.user,
             account=self.user,
@@ -448,9 +452,10 @@ class PlanktonBackend(object):
             size=size,
             domain=PLANKTON_DOMAIN,
             type=SNAPSHOTS_TYPE,
-            meta=metadata,
+            meta=meta,
             replace_meta=True,
             permissions=None)
+
         return snapshot_id
 
     def list_snapshots(self, check_permissions=True):

@@ -85,8 +85,8 @@ def create(user_id, volume, name, description, metadata, force=False):
                                                       "meta_value"))
         metadata.update(vm_metadata)
 
-    snapshot_properties = PlanktonBackend._prefix_properties(metadata)
-    snapshot_metadata.update(snapshot_properties)
+    # Store user metadata as snapshot properties
+    snapshot_metadata["properties"] = metadata
 
     # Generate a name for the Archipelago mapfile.
     mapfile = generate_mapfile_name(volume)
