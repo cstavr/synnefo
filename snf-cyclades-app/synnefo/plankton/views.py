@@ -240,7 +240,7 @@ def add_image_member(request, image_id, member):
 
     log.debug('add_image_member %s %s', image_id, member)
     with PlanktonBackend(request.user_uniq) as backend:
-        backend.add_user(image_id, member)
+        backend.add_member(image_id, member)
     return HttpResponse(status=204)
 
 
@@ -280,7 +280,7 @@ def list_image_members(request, image_id):
     """
 
     with PlanktonBackend(request.user_uniq) as backend:
-        users = backend.list_users(image_id)
+        users = backend.list_members(image_id)
 
     members = [{'member_id': u, 'can_share': False} for u in users]
     data = json.dumps({'members': members}, indent=settings.DEBUG)
@@ -381,7 +381,7 @@ def remove_image_member(request, image_id, member):
 
     log.debug('remove_image_member %s %s', image_id, member)
     with PlanktonBackend(request.user_uniq) as backend:
-        backend.remove_user(image_id, member)
+        backend.remove_member(image_id, member)
     return HttpResponse(status=204)
 
 
@@ -434,7 +434,7 @@ def update_image_members(request, image_id):
         members.append(member)
 
     with PlanktonBackend(request.user_uniq) as backend:
-        backend.replace_users(image_id, members)
+        backend.update_members(image_id, members)
     return HttpResponse(status=204)
 
 

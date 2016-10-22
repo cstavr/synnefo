@@ -285,39 +285,40 @@ class PlanktonBackend(object):
 
     # Users and Permissions
     @handle_pithos_backend
-    def add_user(self, uuid, user):
-        assert(isinstance(user, basestring))
+    def add_member(self, uuid, member):
+        assert(isinstance(member, basestring))
         location, _, permissions = self.get_pithos_object(uuid)
         read = set(permissions.get("read", []))
-        if user not in read:
-            read.add(user)
+        if member not in read:
+            read.add(member)
             permissions["read"] = list(read)
             self._update_permissions(uuid, location, permissions)
 
     @handle_pithos_backend
-    def remove_user(self, uuid, user):
-        assert(isinstance(user, basestring))
+    def remove_member(self, uuid, member):
+        assert(isinstance(member, basestring))
         location, _, permissions = self.get_pithos_object(uuid)
         read = set(permissions.get("read", []))
-        if user in read:
-            read.remove(user)
+        if member in read:
+            read.remove(member)
             permissions["read"] = list(read)
             self._update_permissions(uuid, location, permissions)
 
     @handle_pithos_backend
-    def replace_users(self, uuid, users):
-        assert(isinstance(users, list))
+    def update_members(self, uuid, members):
+        assert(isinstance(members, list))
         location, _, permissions = self.get_pithos_object(uuid)
         read = set(permissions.get("read", []))
         if "*" in read:  # Retain public permissions
-            users.append("*")
-        permissions["read"] = list(users)
+            members.append("*")
+        permissions["read"] = list(members)
         self._update_permissions(uuid, location, permissions)
 
     @handle_pithos_backend
-    def list_users(self, uuid):
+    def list_members(self, uuid):
         location, _, permissions = self.get_pithos_object(uuid)
-        return [user for user in permissions.get('read', []) if user != '*']
+        return [member for member in permissions.get('read', [])
+                if member != '*']
 
     def _update_permissions(self, uuid, location, permissions):
         account, container, path = location
