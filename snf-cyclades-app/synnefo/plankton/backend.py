@@ -453,7 +453,7 @@ class PlanktonBackend(object):
             permissions=None)
         return snapshot_id
 
-    def list_snapshots(self, user=None, check_permissions=True):
+    def list_snapshots(self, check_permissions=True):
         _snapshots = self.list_images(check_permissions=check_permissions)
         return [s for s in _snapshots if s["is_snapshot"]]
 

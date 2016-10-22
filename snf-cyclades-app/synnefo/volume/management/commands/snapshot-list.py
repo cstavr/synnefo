@@ -44,8 +44,7 @@ class Command(SynnefoCommand):
         check_perm = user is not None
 
         with PlanktonBackend(user) as backend:
-            snapshots = backend.list_snapshots(user,
-                                               check_permissions=check_perm)
+            snapshots = backend.list_snapshots(check_permissions=check_perm)
             if options['public']:
                 snapshots = filter(lambda x: x['is_public'], snapshots)
 
