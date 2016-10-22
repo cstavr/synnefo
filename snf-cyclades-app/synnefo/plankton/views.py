@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2016 GRNET S.A. and and individual contributors
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -357,12 +357,17 @@ def list_shared_images(request, member):
 
     log.debug('list_shared_images %s', member)
 
-    images = []
+    shared_images = []
     with PlanktonBackend(request.user_uniq) as backend:
-        for image in backend.list_shared_images(member=member):
-            images.append({'image_id': image["id"], 'can_share': False})
+        images = backend.list_images()
 
-    data = json.dumps({'shared_images': images}, indent=settings.DEBUG)
+    # Keep only non-public images shared by this member
+    for image in images:
+        if image["owner"] == member and not image["is_public"]:
+            shared_images.append({'image_id': image["id"],
+                                  'can_share': False})
+
+    data = json.dumps({'shared_images': shared_images}, indent=settings.DEBUG)
     return HttpResponse(data)
 
 

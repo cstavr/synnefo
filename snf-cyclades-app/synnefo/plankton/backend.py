@@ -434,18 +434,6 @@ class PlanktonBackend(object):
                                  params=params,
                                  check_permissions=check_permissions)
 
-    @handle_pithos_backend
-    def list_shared_images(self, member, filters=None, params=None):
-        images = self._list_images(user=self.user, filters=filters,
-                                   params=params)
-        is_shared = lambda img: not img["is_public"] and img["owner"] == member
-        return filter(is_shared, images)
-
-    @handle_pithos_backend
-    def list_public_images(self, filters=None, params=None):
-        images = self._list_images(user=None, filters=filters, params=params)
-        return filter(lambda img: img["is_public"], images)
-
     # Snapshots
     @handle_pithos_backend
     def register_snapshot(self, name, mapfile, size, metadata):
