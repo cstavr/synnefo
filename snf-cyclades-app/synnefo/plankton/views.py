@@ -28,7 +28,6 @@ from snf_django.lib import api
 from snf_django.lib.api import faults
 from synnefo.plankton.backend import (PlanktonBackend, OBJECT_AVAILABLE,
                                       OBJECT_UNAVAILABLE, OBJECT_ERROR)
-from synnefo.plankton.backend import split_url
 
 
 FILTERS = ('name', 'container_format', 'disk_format', 'status', 'size_min',
@@ -60,8 +59,6 @@ UPDATE_FIELDS = ('name', 'disk_format', 'container_format', 'is_public',
 DISK_FORMATS = ('diskdump', 'extdump', 'ntfsdump')
 
 CONTAINER_FORMATS = ('aki', 'ari', 'ami', 'bare', 'ovf')
-
-STORE_TYPES = ('pithos')
 
 
 META_PREFIX = 'HTTP_X_IMAGE_META_'
@@ -182,27 +179,15 @@ def add_image(request):
         raise faults.BadRequest("Image 'name' parameter is required")
     elif len(smart_unicode(name, encoding="utf-8")) == 0:
         raise faults.BadRequest("Invalid image name")
-    location = params.pop('location', None)
-    if location is None:
-        raise faults.BadRequest("'location' parameter is required")
 
-    try:
-        split_url(location)
-    except AssertionError:
-        raise faults.BadRequest("Invalid location '%s'" % location)
+    location = params.pop('location', None)
+    if not location:
+        raise faults.BadRequest("'location' parameter is required")
 
     validate_fields(params)
 
-    if location:
-        with PlanktonBackend(request.user_uniq) as backend:
-            image = backend.register(name, location, params)
-    else:
-        # f = StringIO(request.body)
-        # image = backend.put(name, f, params)
-        return HttpResponse(status=501)     # Not Implemented
-
-    if not image:
-        return HttpResponse('Registration failed', status=500)
+    with PlanktonBackend(request.user_uniq) as backend:
+        image = backend.register(name, location, params)
 
     return _create_image_response(image)
 
@@ -441,11 +426,6 @@ def update_image_members(request, image_id):
 def validate_fields(params):
     if "id" in params:
         raise faults.BadRequest("Setting the image ID is not supported")
-
-    if "store" in params:
-        if params["store"] not in STORE_TYPES:
-            raise faults.BadRequest("Invalid store type '%s'" %
-                                    params["store"])
 
     if "disk_format" in params:
         if params["disk_format"] not in DISK_FORMATS:

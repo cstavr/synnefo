@@ -328,7 +328,7 @@ class PlanktonBackend(object):
                      self.user, uuid, permissions)
 
     @handle_pithos_backend
-    def register(self, name, image_url, metadata):
+    def register(self, name, location, metadata):
         # Validate that metadata are allowed
         if "id" in metadata:
             raise faults.BadRequest("Passing an ID is not supported")
@@ -347,7 +347,11 @@ class PlanktonBackend(object):
             raise faults.BadRequest("Invalid container format '%s'" %
                                     container_format)
 
-        account, container, path = split_url(image_url)
+        try:
+            account, container, path = split_url(location)
+        except AssertionError:
+            raise faults.BadRequest("Invalid location '%s'" % location)
+
         location = Location(account, container, path)
         meta = self.backend.get_object_meta(self.user, account, container,
                                             path, PLANKTON_DOMAIN, None)
