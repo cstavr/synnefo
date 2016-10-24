@@ -149,7 +149,8 @@ class VolumeAPITest(BaseAPITest):
         # Test success
         snapshot = Mock()
         snapshot.return_value = {'location': 'pithos://foo',
-                                 'mapfile': '1234',
+                                 'backend_id': '1234',
+                                 'backend_uri': 'pithosmap://1234/1024',
                                  'id': 1,
                                  'name': 'test_image',
                                  'size': 1024,
@@ -183,7 +184,8 @@ class VolumeAPITest(BaseAPITest):
         # Test success
         image = Mock()
         image.return_value = {'location': 'pithos://foo',
-                              'mapfile': '1234',
+                              'backend_id': '1234',
+                              'backend_uri': 'pithosmap://1234/1024',
                               'id': 2,
                               'name': 'test_image',
                               'size': 1024,

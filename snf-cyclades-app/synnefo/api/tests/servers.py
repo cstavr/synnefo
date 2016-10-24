@@ -313,7 +313,8 @@ class ServerAPITest(ComputeAPITest):
 
 fixed_image = Mock()
 fixed_image.return_value = {'location': 'pithos://foo',
-                            'mapfile': '1234',
+                            'backend_id': '1234',
+                            'backend_uri': 'pithosmap://1234/1024',
                             "id": 1,
                             "name": "test_image",
                             "version": 42,
@@ -722,7 +723,7 @@ class ServerCreateAPITest(ComputeAPITest):
         self.assertEqual(volume.source, "image:%s" % fixed_image()["id"])
         self.assertEqual(volume.delete_on_termination, True)
         self.assertEqual(volume.userid, user)
-        self.assertEqual(volume.origin, fixed_image()["mapfile"])
+        self.assertEqual(volume.origin, fixed_image()["backend_id"])
 
         # Test using a snapshot
         request["server"]["block_device_mapping_v2"] = [
@@ -740,7 +741,7 @@ class ServerCreateAPITest(ComputeAPITest):
         self.assertEqual(volume.volume_type, self.flavor.volume_type)
         self.assertEqual(volume.size, 10)
         self.assertEqual(volume.source, "snapshot:%s" % fixed_image()["id"])
-        self.assertEqual(volume.origin, fixed_image()["mapfile"])
+        self.assertEqual(volume.origin, fixed_image()["backend_id"])
         self.assertEqual(volume.delete_on_termination, True)
         self.assertEqual(volume.userid, user)
 

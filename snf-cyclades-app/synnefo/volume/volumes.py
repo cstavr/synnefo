@@ -208,7 +208,7 @@ def _create_volume(user_id, project, size, source_type, source_uuid,
                                     " snapshot's size '%s'"
                                     % (size << 30, source_snapshot["size"]))
         source_version = source_snapshot["version"]
-        origin = source_snapshot["mapfile"]
+        origin = source_snapshot["backend_id"]
         origin_size = source_snapshot["size"]
     elif source_type == "image":
         source_image = util.get_image(user_id, source_uuid,
@@ -225,7 +225,7 @@ def _create_volume(user_id, project, size, source_type, source_uuid,
                                     % (size << 30, source_image["size"]))
         source = Volume.prefix_source(source_uuid, source_type="image")
         source_version = source_image["version"]
-        origin = source_image["mapfile"]
+        origin = source_image["backend_id"]
         origin_size = source_image["size"]
     elif source_type == "blank":
         if size is None:

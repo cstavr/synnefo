@@ -495,7 +495,7 @@ class Image(models.Model):
     owner = models.CharField(max_length=128, null=False)
     name = models.CharField(max_length=256, null=False)
     location = models.TextField()
-    mapfile = models.CharField(max_length=256, null=False)
+    backend_id = models.CharField(max_length=256, null=False)
     is_public = models.BooleanField(default=False, null=False)
     is_snapshot = models.BooleanField(default=False, null=False)
     is_system = models.BooleanField(default=False, null=False)

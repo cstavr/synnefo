@@ -88,27 +88,24 @@ def create(user_id, volume, name, description, metadata, force=False):
     # Store user metadata as snapshot properties
     snapshot_metadata["properties"] = metadata
 
-    # Generate a name for the Archipelago mapfile.
-    mapfile = generate_mapfile_name(volume)
-
     # Convert size from Gbytes to bytes
     size = volume.size << 30
 
     with PlanktonBackend(user_id) as b:
         try:
-            snapshot_id = b.register_snapshot(name=name,
-                                              mapfile=mapfile,
-                                              size=size,
-                                              metadata=snapshot_metadata)
+            snapshot = b.register_snapshot(name, size, snapshot_metadata,
+                                           volume.id, volume.snapshot_counter)
         except faults.OverLimit:
             msg = ("Resource limit exceeded for your account."
                    " Not enough storage space to create snapshot of"
                    " %s size." % units.show(size, "bytes", "gb"))
             raise faults.OverLimit(msg)
 
+        snapshot_id = snapshot["id"]
+        backend_id = snapshot["backend_id"]
         try:
             job_id = backend.snapshot_instance(volume.machine, volume,
-                                               snapshot_name=mapfile,
+                                               snapshot_name=backend_id,
                                                snapshot_id=snapshot_id)
         except:
             # If failed to enqueue job to Ganeti, mark snapshot as ERROR
@@ -127,13 +124,6 @@ def create(user_id, volume, name, description, metadata, force=False):
     snapshot = util.get_snapshot(user_id, snapshot_id)
 
     return snapshot
-
-
-def generate_mapfile_name(volume):
-    """Helper function to generate a name for the Archipelago mapfile."""
-    # time = isoformat(datetime.datetime.now())
-    return "snf-snap-%s-%s" % (volume.id,
-                               volume.snapshot_counter)
 
 
 def delete(snapshot):

@@ -48,12 +48,12 @@ class Command(SynnefoCommand):
             if options['public']:
                 snapshots = filter(lambda x: x['is_public'], snapshots)
 
-        headers = ("id", "name", "volume_id", "size", "mapfile", "status",
+        headers = ("id", "name", "volume_id", "size", "backend_id", "status",
                    "owner", "is_public")
         table = []
         for snap in snapshots:
             fields = (snap["id"], snap["name"], snap["volume_id"],
-                      snap["size"], snap["mapfile"], snap["status"],
+                      snap["size"], snap["backend_id"], snap["status"],
                       snap["owner"], snap["is_public"])
             table.append(fields)
         pprint_table(self.stdout, table, headers)

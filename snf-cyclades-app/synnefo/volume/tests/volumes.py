@@ -448,7 +448,7 @@ class VolumesTest(QuotaAssertions, BaseAPITest):
         mimage().__enter__().get_snapshot.side_effect = None
         mimage().__enter__().get_snapshot.return_value = {
             'location': 'pithos://foo',
-            'mapfile': 'snf-snapshot-43',
+            'backend_id': 'snf-snapshot-43',
             'id': 12,
             'name': "test_image",
             'version': 42,

@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import json
 
 from base64 import urlsafe_b64encode, b64decode
 from urllib import quote
@@ -27,7 +28,6 @@ from Crypto.Cipher import AES
 from django.conf import settings
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-import json
 from django.core.cache import caches
 
 from snf_django.lib.api import faults
@@ -61,8 +61,6 @@ NETWORKS_URL = join_urls(NETWORK_URL, "networks/")
 PORTS_URL = join_urls(NETWORK_URL, "ports/")
 SUBNETS_URL = join_urls(NETWORK_URL, "subnets/")
 FLOATING_IPS_URL = join_urls(NETWORK_URL, "floatingips/")
-
-PITHOSMAP_PREFIX = "pithosmap://"
 
 log = getLogger('synnefo.api')
 
@@ -235,9 +233,9 @@ def get_image_dict(image_id, user_id):
     image["format"] = img["disk_format"]
     image["version"] = img["version"]
 
-    size = image["size"] = img["size"]
-    mapfile = image["mapfile"] = img["mapfile"]
-    image["pithosmap"] = PITHOSMAP_PREFIX + "/".join([mapfile, str(size)])
+    image["size"] = img["size"]
+    image["backend_id"] = img["backend_id"]
+    image["backend_uri"] = img["backend_uri"]
 
     properties = img.get("properties", {})
     image["metadata"] = dict((key.upper(), val)

@@ -69,6 +69,8 @@ SNAPSHOTS_TYPE = "application/octet-stream"
 MAX_META_KEY_LENGTH = 128 - len(PLANKTON_DOMAIN) - len(PROPERTY_PREFIX)
 MAX_META_VALUE_LENGTH = 256
 
+PITHOSMAP_PREFIX = "pithosmap"
+
 _pithos_backend_pool = None
 
 
@@ -441,13 +443,17 @@ class PlanktonBackend(object):
 
     # Snapshots
     @handle_pithos_backend
-    def register_snapshot(self, name, mapfile, size, metadata):
+    def register_snapshot(self, name, size, metadata, volume_id,
+                          volume_snapshot_cnt):
         meta = deepcopy(metadata)
         properties = meta.pop("properties", {})
         meta.update(self._prefix_properties(properties))
         meta = self._prefix_and_validate_metadata(meta)
 
-        snapshot_id = self.backend.register_object_map(
+        # Generate mapfile name
+        mapfile = "snf-snap-%s-%s" % (volume_id, volume_snapshot_cnt)
+
+        uuid = self.backend.register_object_map(
             user=self.user,
             account=self.user,
             container=SNAPSHOTS_CONTAINER,
@@ -460,7 +466,7 @@ class PlanktonBackend(object):
             replace_meta=True,
             permissions=None)
 
-        return snapshot_id
+        return self._get_image(uuid)
 
     def list_snapshots(self, check_permissions=True):
         _snapshots = self.list_images(check_permissions=check_permissions)
@@ -512,7 +518,10 @@ def image_to_dict(location, metadata, permissions):
 
     image = {}
     image["id"] = metadata["uuid"]
-    image["mapfile"] = metadata["mapfile"]
+    image["backend_id"] = metadata["mapfile"]
+    image["backend_uri"] = "%s://%s/%s" % (PITHOSMAP_PREFIX,
+                                           metadata["mapfile"],
+                                           metadata["bytes"])
     image["checksum"] = metadata["hash"]
     image["location"] = create_url(account, container, name)
     image["size"] = metadata["bytes"]
