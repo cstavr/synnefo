@@ -17,7 +17,8 @@ import logging
 import json
 from synnefo.db import transaction
 from snf_django.lib.api import faults
-from synnefo.plankton.backend import PlanktonBackend, OBJECT_ERROR
+from synnefo.plankton.backend import (PlanktonBackend, OBJECT_ERROR,
+                                      OBJECT_AVAILABLE, OBJECT_UNAVAILABLE)
 from synnefo.logic import backend
 from synnefo.volume import util
 from synnefo.util import units
@@ -100,6 +101,19 @@ def create(user_id, volume, name, description, metadata, force=False):
                    " Not enough storage space to create snapshot of"
                    " %s size." % units.show(size, "bytes", "gb"))
             raise faults.OverLimit(msg)
+
+        status = snapshot["status"]
+        if status == OBJECT_ERROR:
+            raise faults.InternalServerError("Failed to create snasphot")
+
+        # In case the register_snapshot() calls returns a snapshot in AVAILABLE
+        # status, then the snapshot has successfully been created.
+        # If the snapshot is UNAVAILABLE, then the snapshot has only been
+        # registered, and we need to create the snapshot by issuing an
+        # OP_INSTANCE_SNAPSHOT Ganeti job.
+        if status == OBJECT_AVAILABLE:
+            return snapshot
+        assert status == OBJECT_UNAVAILABLE
 
         snapshot_id = snapshot["id"]
         backend_id = snapshot["backend_id"]
