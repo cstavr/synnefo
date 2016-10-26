@@ -192,6 +192,21 @@ class GanetiRapiClient(object): # pylint: disable=R0904
 
     self._auth = (username, password)
 
+  @staticmethod
+  def encode_query(query):
+    _query = {}
+    for key, value in query:
+      if value is None:
+        _query[key] = ""
+      elif isinstance(value, bool):
+        # Boolean values must be encoded as 0 or 1
+        _query[key] = int(value)
+      elif isinstance(value, (list, tuple, dict)):
+        raise ValueError("Invalid query data type %r" % type(value).__name__)
+      else:
+        _query[key] = value
+    return _query
+
   def _SendRequest(self, method, path, query, content):
     """Sends an HTTP request.
 
@@ -226,7 +241,7 @@ class GanetiRapiClient(object): # pylint: disable=R0904
       encoded_content = ""
 
     if query is not None:
-        query = dict(query)
+        query = self.encode_query(query)
 
     self._logger.debug("Sending request %s %s (query=%r) (content=%r)",
                        method, url, query, encoded_content)
