@@ -359,8 +359,8 @@ class VirtualMachine(models.Model):
     backend_hash = models.CharField(max_length=128, null=True, editable=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    imageid = models.CharField(max_length=100, null=False)
     key_name = models.CharField(max_length=100, null=True)
+    imageid = models.CharField(max_length=100, null=False)
     image_version = models.IntegerField(null=True)
     hostid = models.CharField(max_length=100)
     flavor = models.ForeignKey(Flavor, on_delete=models.PROTECT)
@@ -491,7 +491,7 @@ class Image(models.Model):
     """
 
     uuid = models.CharField(max_length=128)
-    version = models.IntegerField(null=False)
+    version = models.CharField(max_length=128, null=False)
     owner = models.CharField(max_length=128, null=False)
     name = models.CharField(max_length=256, null=False)
     location = models.TextField()
@@ -1290,7 +1290,7 @@ class Volume(models.Model):
                                                 default=True, null=False)
 
     source = models.CharField(max_length=128, null=True)
-    source_version = models.IntegerField(null=True)
+    source_version = models.CharField(max_length=128, null=True)
     origin = models.CharField(max_length=128, null=True)
 
     deleted = models.BooleanField("Deleted", default=False, null=False,
