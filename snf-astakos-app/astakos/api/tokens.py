@@ -160,3 +160,93 @@ def validate_token(request, token_id):
         return xml_response({'d': d}, 'api/access.xml')
     else:
         return json_response(d)
+
+
+@csrf_exempt
+@api_method(http_method="POST", token_required=False, user_required=False,
+            logger=logger)
+def v3_authenticate(request):
+    try:
+        content_length = get_content_length(request)
+    except faults.LengthRequired:
+        content_length = None
+
+    public_mode = True if not content_length else False
+
+    d = defaultdict(dict)
+    if not public_mode:
+        req = utils.get_json_body(request)
+
+        try:
+            identity = req["auth"]["identity"]
+            auth_methods = identity["methods"]
+            if not auth_methods:
+                raise KeyError("No authentication methods")
+        except KeyError:
+            raise faults.BadRequest("Missing authentications methods")
+
+        if len(auth_methods) > 1:
+            raise faults.NotImplemented("Server does not support more than one"
+                                        " authentication methods")
+
+        uuid, token_id = None, None
+        if "password" in auth_methods:
+            try:
+                uuid = identity["password"]["user"]["name"]
+                token_id = identity["password"]["user"]["password"]
+            except KeyError:
+                raise faults.BadRequest("Malformed request: Missing"
+                                        " credentials for 'password'"
+                                        " authentication")
+        elif "token" in auth_methods:
+            try:
+                token_id = identity["token"]["id"]
+            except KeyError:
+                raise faults.BadRequest("Malformed request: Missing"
+                                        " credentials for 'token'"
+                                        " authentication")
+        else:
+            raise faults.BadRequest("Unknown authentication method: %s" %
+                                    auth_methods[0])
+
+        if token_id is None:
+            raise faults.BadRequest('Malformed request: missing token')
+
+        try:
+            user = AstakosUser.objects.get(auth_token=token_id)
+        except AstakosUser.DoesNotExist:
+            raise faults.Unauthorized('Invalid token')
+
+        validate_user(user)
+
+        if uuid is not None:
+            if user.uuid != uuid:
+                raise faults.Unauthorized('Invalid credentials')
+
+        user_projects = user.project_set.filter(projectmembership__state__in =\
+            ProjectMembership.ACCEPTED_STATES).values_list("uuid", flat=True)
+        d["token"]["methods"] = ["token"]
+        d["token"]["issued_at"] = utils.isoformat(user.auth_token_created)
+        d["token"]["expires_at"] = utils.isoformat(user.auth_token_expires)
+        d["token"]["extras"] = {}  # custom metadata
+        d["token"]["user"] = {"id": user.uuid,
+                              "name": user.email,
+                              "password_expires_at": None,
+                              "domain": {"id": "default",
+                                         "name": "Default"}}
+        d["token"]["roles"] = [{"id": g["id"], "name": g["name"]}
+                               for g in user.groups.values("id", "name")]
+        d["token"]["project"] = {"domain": {"id": "default",
+                                            "name": "Default"},
+                                 "id": user.uuid,
+                                 "name": user.realname}
+        d["token"]["projects"] = list(user_projects)
+        d["token"]["audit_ids"] = []
+        d["token"]["catalog"] = get_endpoints()
+
+    if request.serialization == 'xml':
+        response = xml_response({'d': d}, 'api/access.xml')
+    else:
+        response = json_response(d)
+    response["X-Subject-Token"] = user.auth_token
+    return response

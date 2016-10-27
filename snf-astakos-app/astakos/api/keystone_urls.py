@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2016 GRNET S.A. and individual contributors
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,5 +34,7 @@ urlpatterns += patterns(
     url(r'^v2.0/tokens/(?P<token_id>.+?)/?$', 'validate_token',
         name='validate_token'),
     url(r'^v2.0/tokens/?$', 'authenticate', name='tokens_authenticate'),
+    url(r'^v3/auth/tokens/?$', 'v3_authenticate',
+        name='v3_tokens_authenticate'),
     url(r'^.*', api_endpoint_not_found),
 )
