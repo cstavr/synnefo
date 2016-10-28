@@ -44,7 +44,7 @@
         },
 
         get_owner: function() {
-            return this.get('owner') || 'Unknown';
+            return this.get('owner') || this.get('owner_uuid') || "Unknown";
         },
 
         is_snapshot: function() {
